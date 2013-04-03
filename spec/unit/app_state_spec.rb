@@ -79,6 +79,20 @@ module HealthManager
       app.crashes.should have_key(message['instance'])
     end
 
+    it 'should notify developer only once when app may be flapping' do
+      app, _ = make_app
+      counter = 0
+
+      AppState.add_listener :notify_developer do
+        counter += 1
+      end
+      AppState.flapping_timeout = 500
+      (AppState.flapping_death + 1).times do
+        app.process_exit_crash make_crash_message(app)
+      end
+      counter.should == 1
+    end
+
     it 'should invoke missing_instances event handler' do
       future_answer = [1, 3]
       event_handler_invoked = false

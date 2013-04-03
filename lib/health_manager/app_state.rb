@@ -21,6 +21,7 @@ module HealthManager
           :exit_stopped,
           :exit_dea,
           :droplet_updated,
+          :notify_developer,
         ]
       end
 
@@ -274,7 +275,6 @@ module HealthManager
       if instance['instance'] != message['instance']
         logger.warn { "unexpected instance_id: #{message['instance']}, expected: #{instance['instance']}" }
       end
-
       instance['crashes'] = 0 if timestamp_older_than?(instance['crash_timestamp'], AppState.flapping_timeout)
       instance['crashes'] += 1
       instance['crash_timestamp'] = message['crash_timestamp']
@@ -282,6 +282,8 @@ module HealthManager
       if instance['crashes'] > AppState.flapping_death
         instance['state'] = FLAPPING
       end
+
+      notify(:notify_developer, message) if instance['crashes'] == 1
 
       @crashes[instance['instance']] = {
         'timestamp' => now,

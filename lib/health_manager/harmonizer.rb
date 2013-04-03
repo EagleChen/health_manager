@@ -91,6 +91,11 @@ module HealthManager
         update_expected_state
       end
 
+      AppState.add_listener(:notify_developer) do |app_state, message|
+        logger.info { "harmonizer: notify_developer: #{message}" }
+        NATS.publish("notifier.requests", message)
+      end
+
       #schedule time-based actions
 
       scheduler.immediately { update_expected_state }
